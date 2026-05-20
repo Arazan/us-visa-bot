@@ -4,22 +4,21 @@ import { log, notify, sleep, randomDelay, isSocketHangupError } from '../lib/uti
 
 const COOLDOWN = 3600; // 1 hour in seconds
 
-export async function botCommand(options) {
+export async function botCommand(state = {}) {
   const config = getConfig();
-  const bot = new Bot(config, { dryRun: options.dryRun });
-  let currentBookedDate = options.current;
-  const targetDate = options.target;
-  const minDate = options.min;
-  const maxLoops = options.maxLoops;
-  const maxBookings = options.maxBookings;
+  const bot = new Bot(config, { dryRun: config.dryRun });
 
-  // Counters persist across auth-retry recursion via the options object.
-  let loopCount = options._loopCount ?? 0;
-  let bookingCount = options._bookingCount ?? 0;
+  // `currentBookedDate` advances after each successful booking. Counters
+  // persist across recursive auth-retry calls via `state`.
+  let currentBookedDate = state.currentBookedDate ?? config.currentDate;
+  let loopCount = state.loopCount ?? 0;
+  let bookingCount = state.bookingCount ?? 0;
+
+  const { targetDate, minDate, maxLoops, maxBookings } = config;
 
   log(`Initializing with current date ${currentBookedDate}`);
 
-  if (options.dryRun) {
+  if (config.dryRun) {
     log(`[DRY RUN MODE] Bot will only log what would be booked without actually booking`);
   }
 
@@ -65,17 +64,10 @@ export async function botCommand(options) {
           currentBookedDate = availableDate;
 
           // Only real bookings count toward maxBookings.
-          if (!options.dryRun) {
+          if (!config.dryRun) {
             bookingCount++;
             log(`Real bookings so far: ${bookingCount}${maxBookings ? `/${maxBookings}` : ''}`);
           }
-
-          options = {
-            ...options,
-            current: currentBookedDate,
-            _loopCount: loopCount,
-            _bookingCount: bookingCount
-          };
 
           if (targetDate && availableDate <= targetDate) {
             log(`Target date reached! Successfully booked appointment on ${availableDate}`);
@@ -100,10 +92,6 @@ export async function botCommand(options) {
     } else {
       notify(`⚠️ Session/authentication error: ${err.message}. Retrying immediately...`);
     }
-    return botCommand({
-      ...options,
-      _loopCount: loopCount,
-      _bookingCount: bookingCount
-    });
+    return botCommand({ currentBookedDate, loopCount, bookingCount });
   }
 }

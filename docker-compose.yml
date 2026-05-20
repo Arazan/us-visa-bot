@@ -6,5 +6,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    # Override the CLI args here (current/target/min dates, flags, ...).
-    command: ["-c", "2026-12-09", "--max-loops", "3", "--dry-run"]
+    # All run parameters (CURRENT_DATE, TARGET_DATE, MIN_DATE, DRY_RUN,
+    # MAX_LOOPS, MAX_BOOKINGS, ...) are now configured via .env.
+

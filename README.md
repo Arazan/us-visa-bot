@@ -37,20 +37,30 @@ npm install
 
 ## Configuration
 
-Create a `.env` file in the project root with your credentials:
+Create a `.env` file in the project root with your credentials and run parameters:
 
 ```env
+# --- Credentials / target site ---
 EMAIL=your.email@example.com
 PASSWORD=your_password
 COUNTRY_CODE=your_country_code
 SCHEDULE_ID=your_schedule_id
 FACILITY_ID=your_facility_id
 
+# --- Polling cadence ---
 # Randomized polling delay (seconds). A new value is picked each iteration.
 REFRESH_DELAY_MIN=60
 REFRESH_DELAY_MAX=120
 
-# Optional: mirror all log messages to a Discord channel via webhook.
+# --- Run parameters (previously CLI flags) ---
+CURRENT_DATE=2026-12-09     # REQUIRED, YYYY-MM-DD
+#TARGET_DATE=2026-08-01     # optional, exit when an appt <= this is booked
+#MIN_DATE=2026-05-01        # optional, ignore dates earlier than this
+DRY_RUN=false               # true/1/yes/on => log only, do not book
+#MAX_LOOPS=10               # optional, stop after N polling iterations
+#MAX_BOOKINGS=1             # optional, stop after N real bookings
+
+# --- Optional: mirror booking/error log messages to a Discord channel. ---
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
 ```
 
@@ -66,6 +76,12 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
 | `REFRESH_DELAY_MIN` | Minimum seconds between checks | Optional, defaults to `60`. A random delay is picked each iteration between MIN and MAX. |
 | `REFRESH_DELAY_MAX` | Maximum seconds between checks | Optional, defaults to `120`. Must be `>= REFRESH_DELAY_MIN`. |
 | `DISCORD_WEBHOOK_URL` | Discord webhook URL for booking and error notifications | Optional. When set, the bot posts a Discord message on successful bookings and on errors (socket hangups, session/auth failures). Leave unset to disable. |
+| `CURRENT_DATE` | Your current booked interview date (YYYY-MM-DD) | **Required.** The bot only books dates earlier than this. |
+| `TARGET_DATE` | Target date (YYYY-MM-DD) to stop at | Optional. The bot exits successfully once an appointment on or before this date is booked. |
+| `MIN_DATE` | Minimum acceptable date (YYYY-MM-DD) | Optional. Skips any available date earlier than this. |
+| `DRY_RUN` | Only log what would be booked without actually booking | Optional. Accepts `true`/`1`/`yes`/`on` (case-insensitive). Anything else is treated as false. Recommended for first runs. |
+| `MAX_LOOPS` | Stop after this many polling iterations | Optional positive integer. If unset, the bot polls forever until stopped manually or a target/booking limit is reached. |
+| `MAX_BOOKINGS` | Stop after this many real bookings | Optional positive integer. Dry-run bookings do **not** count. If unset, the bot keeps booking earlier dates indefinitely. |
 
 ### Discord Notifications (Optional)
 
@@ -85,83 +101,72 @@ Only **actual bookings** and **errors** are posted to Discord (e.g. `✅ Booked 
 
 ## Usage
 
-Run the bot with your current appointment date:
+All run parameters now come from environment variables (see [Configuration](#configuration)). Fill in your `.env` and start the bot:
 
 ```bash
-node src/index.js -c <current_date> [-t <target_date>] [-m <min_date>] [--dry-run] [--max-loops <n>] [--max-bookings <n>]
+node src/index.js
 ```
 
 Or via npm:
 
 ```bash
-npm start -- -c <current_date> [-t <target_date>] [-m <min_date>] [--dry-run] [--max-loops <n>] [--max-bookings <n>]
+npm start
 ```
 
-### Command Line Arguments
+### Example `.env` recipes
 
-| Flag | Long Form | Required | Description |
-|------|-----------|----------|-------------|
-| `-c` | `--current` | ✅ | Your current booked interview date (YYYY-MM-DD) |
-| `-t` | `--target` | ❌ | Target date to stop at - exits successfully when reached |
-| `-m` | `--min` | ❌ | Minimum acceptable date - skips dates before this |
-|      | `--dry-run` | ❌ | Log what would be booked without actually booking (recommended for first run) |
-|      | `--max-loops <n>` | ❌ | Stop after `n` polling iterations (positive integer). If omitted, the bot polls **forever** until stopped manually or a target/booking limit is reached. |
-|      | `--max-bookings <n>` | ❌ | Stop after `n` real bookings (positive integer). Dry-run bookings do **not** count. If omitted, the bot will keep booking earlier dates indefinitely. |
+**Dry run** — safely test login and polling without booking:
+```env
+CURRENT_DATE=2026-06-15
+DRY_RUN=true
+```
 
-### Examples
+**With target date** — stop when you get June 1st or earlier:
+```env
+CURRENT_DATE=2026-06-15
+TARGET_DATE=2026-06-01
+```
 
-```bash
-# Basic usage - reschedule to any earlier date
-node src/index.js -c 2026-06-15
+**With minimum date** — only accept dates after May 1st:
+```env
+CURRENT_DATE=2026-06-15
+MIN_DATE=2026-05-01
+```
 
-# Dry run - safely test login and polling without booking
-node src/index.js -c 2026-06-15 --dry-run
+**Both constraints + a single booking cap:**
+```env
+CURRENT_DATE=2026-06-15
+TARGET_DATE=2026-06-01
+MIN_DATE=2026-05-01
+MAX_BOOKINGS=1
+```
 
-# With target date - stop when you get June 1st or earlier
-node src/index.js -c 2026-06-15 -t 2026-06-01
-
-# With minimum date - only accept dates after May 1st
-node src/index.js -c 2026-06-15 -m 2026-05-01
-
-# With both constraints - only book between May 1st and June 1st
-node src/index.js -c 2026-06-15 -t 2026-06-01 -m 2026-05-01
-
-# Cap the number of polling iterations (safety / testing)
-node src/index.js -c 2026-06-15 --max-loops 10
-
-# Allow at most 1 real booking, then exit
-node src/index.js -c 2026-06-15 --max-bookings 1
-
-# Get help
-node src/index.js --help
+**Cap polling iterations** (safety / testing):
+```env
+CURRENT_DATE=2026-06-15
+MAX_LOOPS=10
 ```
 
 ## Running with Docker
 
-The repo ships with a `Dockerfile` and a `docker-compose.yml` for running the bot in a container. Configuration is read from your `.env` file (same variables documented above), and CLI flags (`-c`, `-t`, `-m`, `--dry-run`, ...) are passed as arguments to the container.
+The repo ships with a `Dockerfile` and a `docker-compose.yml` for running the bot in a container. All configuration — credentials *and* run parameters — is read from your `.env` file.
 
 ### Option A: Docker Compose (recommended)
 
-1. Make sure your `.env` is filled in (see [Configuration](#configuration)).
-2. Edit the `command:` line in `docker-compose.yml` to set your current booked date and any other flags:
-
-   ```yaml
-   command: ["-c", "2026-12-09", "-t", "2026-08-01", "--dry-run"]
-   ```
-
-3. Build and start:
+1. Make sure your `.env` is filled in (see [Configuration](#configuration)), including `CURRENT_DATE` and any optional run parameters (`TARGET_DATE`, `MIN_DATE`, `DRY_RUN`, `MAX_LOOPS`, `MAX_BOOKINGS`).
+2. Build and start:
 
    ```bash
    docker compose up --build -d
    ```
 
-4. Tail the logs:
+3. Tail the logs:
 
    ```bash
    docker compose logs -f
    ```
 
-5. Stop:
+4. Stop:
 
    ```bash
    docker compose down
@@ -175,10 +180,10 @@ The service is configured with `restart: unless-stopped`, so the container will 
 # Build the image
 docker build -t us-visa-bot .
 
-# Run it, passing your .env and the CLI flags after the image name
+# Run it, passing your .env (which contains all run parameters)
 docker run --rm --name us-visa-bot \
   --env-file .env \
-  us-visa-bot -c 2026-12-09 --dry-run
+  us-visa-bot
 ```
 
 To run in the background with auto-restart, swap `--rm` for `-d --restart unless-stopped`.
@@ -195,10 +200,10 @@ The bot will:
 1. **Log in** to your account using provided credentials
 2. **Check** for available dates on a randomized interval (between `REFRESH_DELAY_MIN` and `REFRESH_DELAY_MAX` seconds) to look less bot-like
 3. **Compare** found dates against your constraints:
-   - Must be earlier than current date (`-c`)
-   - Must be after minimum date (`-m`) if specified
-   - Will exit successfully if target date (`-t`) is reached
-4. **Book** the appointment automatically if conditions are met (skipped when `--dry-run` is set)
+   - Must be earlier than `CURRENT_DATE`
+   - Must be on or after `MIN_DATE` if specified
+   - Will exit successfully if `TARGET_DATE` is reached
+4. **Book** the appointment automatically if conditions are met (skipped when `DRY_RUN=true`)
 5. **Continue** monitoring until target is reached or manually stopped
 
 ## Output Examples
@@ -217,8 +222,8 @@ The bot will:
 ## Safety Features
 
 - ✅ **Read-only until booking** - Only books when better dates are found
-- ✅ **Dry-run mode** - Use `--dry-run` to validate login and polling without booking
-- ✅ **Loop & booking caps** - `--max-loops` and `--max-bookings` provide hard exit limits
+- ✅ **Dry-run mode** - Set `DRY_RUN=true` to validate login and polling without booking
+- ✅ **Loop & booking caps** - `MAX_LOOPS` and `MAX_BOOKINGS` provide hard exit limits
 - ✅ **Randomized polling** - Random delay between checks to look less bot-like
 - ✅ **Respects constraints** - Won't book outside your specified date range
 - ✅ **Graceful exit** - Stops automatically when target is reached
