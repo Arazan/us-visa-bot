@@ -136,6 +136,59 @@ node src/index.js -c 2026-06-15 --max-bookings 1
 node src/index.js --help
 ```
 
+## Running with Docker
+
+The repo ships with a `Dockerfile` and a `docker-compose.yml` for running the bot in a container. Configuration is read from your `.env` file (same variables documented above), and CLI flags (`-c`, `-t`, `-m`, `--dry-run`, ...) are passed as arguments to the container.
+
+### Option A: Docker Compose (recommended)
+
+1. Make sure your `.env` is filled in (see [Configuration](#configuration)).
+2. Edit the `command:` line in `docker-compose.yml` to set your current booked date and any other flags:
+
+   ```yaml
+   command: ["-c", "2026-12-09", "-t", "2026-08-01", "--dry-run"]
+   ```
+
+3. Build and start:
+
+   ```bash
+   docker compose up --build -d
+   ```
+
+4. Tail the logs:
+
+   ```bash
+   docker compose logs -f
+   ```
+
+5. Stop:
+
+   ```bash
+   docker compose down
+   ```
+
+The service is configured with `restart: unless-stopped`, so the container will come back up after crashes or host reboots.
+
+### Option B: Plain `docker run`
+
+```bash
+# Build the image
+docker build -t us-visa-bot .
+
+# Run it, passing your .env and the CLI flags after the image name
+docker run --rm --name us-visa-bot \
+  --env-file .env \
+  us-visa-bot -c 2026-12-09 --dry-run
+```
+
+To run in the background with auto-restart, swap `--rm` for `-d --restart unless-stopped`.
+
+### Notes
+
+- The image is based on `node:20-alpine` and runs as the non-root `node` user.
+- `.env` is **not** baked into the image — it's mounted at runtime via `--env-file` / `env_file:` so secrets stay out of the image layers.
+- The bot doesn't expose any ports; no `-p` mapping is needed.
+
 ## How It Behaves
 
 The bot will:

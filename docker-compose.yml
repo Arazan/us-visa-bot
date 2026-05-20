@@ -1,0 +1,10 @@
+services:
+  bot:
+    build: .
+    image: us-visa-bot:latest
+    container_name: us-visa-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    # Override the CLI args here (current/target/min dates, flags, ...).
+    command: ["-c", "2026-12-09"]
