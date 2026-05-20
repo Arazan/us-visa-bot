@@ -9,6 +9,7 @@ An automated bot that monitors and reschedules US visa interview appointments to
 - 🎯 Configurable target and minimum date constraints
 - 🚨 Exits successfully when target date is reached
 - 📊 Detailed logging with timestamps
+- 💬 Optional Discord webhook notifications (mirrors all log output)
 - 🔐 Secure authentication with environment variables
 
 ## How It Works
@@ -48,6 +49,9 @@ FACILITY_ID=your_facility_id
 # Randomized polling delay (seconds). A new value is picked each iteration.
 REFRESH_DELAY_MIN=60
 REFRESH_DELAY_MAX=120
+
+# Optional: mirror all log messages to a Discord channel via webhook.
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
 ```
 
 ### Finding Your Configuration Values
@@ -61,6 +65,23 @@ REFRESH_DELAY_MAX=120
 | `FACILITY_ID` | Your consulate facility ID | Found in network calls when selecting dates, or inspect the date selector dropdown <br>Example: Paris = `44` |
 | `REFRESH_DELAY_MIN` | Minimum seconds between checks | Optional, defaults to `60`. A random delay is picked each iteration between MIN and MAX. |
 | `REFRESH_DELAY_MAX` | Maximum seconds between checks | Optional, defaults to `120`. Must be `>= REFRESH_DELAY_MIN`. |
+| `DISCORD_WEBHOOK_URL` | Discord webhook URL for log notifications | Optional. When set, every log message is also posted to the configured Discord channel. Leave unset to disable. |
+
+### Discord Notifications (Optional)
+
+To receive log messages in a Discord channel:
+
+1. Open your Discord server and go to **Server Settings → Integrations → Webhooks**.
+2. Click **New Webhook**, choose the target channel, and copy the **Webhook URL**.
+3. Add it to your `.env` file:
+
+   ```env
+   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
+   ```
+
+All `log()` output (the same lines you see in the console) will be mirrored to the channel. Messages are sent asynchronously and serialized, so they won't slow down the bot and respect Discord's rate limits (HTTP 429 is handled automatically). If the variable is unset, Discord posting is silently disabled.
+
+> ⚠️ Treat the webhook URL like a secret — anyone with it can post to your channel. Keep your `.env` out of version control.
 
 ## Usage
 
