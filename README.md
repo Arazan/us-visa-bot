@@ -67,13 +67,13 @@ REFRESH_DELAY_MAX=120
 Run the bot with your current appointment date:
 
 ```bash
-node src/index.js -c <current_date> [-t <target_date>] [-m <min_date>] [--dry-run]
+node src/index.js -c <current_date> [-t <target_date>] [-m <min_date>] [--dry-run] [--max-loops <n>] [--max-bookings <n>]
 ```
 
 Or via npm:
 
 ```bash
-npm start -- -c <current_date> [-t <target_date>] [-m <min_date>] [--dry-run]
+npm start -- -c <current_date> [-t <target_date>] [-m <min_date>] [--dry-run] [--max-loops <n>] [--max-bookings <n>]
 ```
 
 ### Command Line Arguments
@@ -84,6 +84,8 @@ npm start -- -c <current_date> [-t <target_date>] [-m <min_date>] [--dry-run]
 | `-t` | `--target` | ❌ | Target date to stop at - exits successfully when reached |
 | `-m` | `--min` | ❌ | Minimum acceptable date - skips dates before this |
 |      | `--dry-run` | ❌ | Log what would be booked without actually booking (recommended for first run) |
+|      | `--max-loops <n>` | ❌ | Stop after `n` polling iterations (positive integer). If omitted, the bot polls **forever** until stopped manually or a target/booking limit is reached. |
+|      | `--max-bookings <n>` | ❌ | Stop after `n` real bookings (positive integer). Dry-run bookings do **not** count. If omitted, the bot will keep booking earlier dates indefinitely. |
 
 ### Examples
 
@@ -102,6 +104,12 @@ node src/index.js -c 2026-06-15 -m 2026-05-01
 
 # With both constraints - only book between May 1st and June 1st
 node src/index.js -c 2026-06-15 -t 2026-06-01 -m 2026-05-01
+
+# Cap the number of polling iterations (safety / testing)
+node src/index.js -c 2026-06-15 --max-loops 10
+
+# Allow at most 1 real booking, then exit
+node src/index.js -c 2026-06-15 --max-bookings 1
 
 # Get help
 node src/index.js --help
@@ -136,6 +144,7 @@ The bot will:
 
 - ✅ **Read-only until booking** - Only books when better dates are found
 - ✅ **Dry-run mode** - Use `--dry-run` to validate login and polling without booking
+- ✅ **Loop & booking caps** - `--max-loops` and `--max-bookings` provide hard exit limits
 - ✅ **Randomized polling** - Random delay between checks to look less bot-like
 - ✅ **Respects constraints** - Won't book outside your specified date range
 - ✅ **Graceful exit** - Stops automatically when target is reached

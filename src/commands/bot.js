@@ -10,6 +10,12 @@ export async function botCommand(options) {
   let currentBookedDate = options.current;
   const targetDate = options.target;
   const minDate = options.min;
+  const maxLoops = options.maxLoops;
+  const maxBookings = options.maxBookings;
+
+  // Counters persist across auth-retry recursion via the options object.
+  let loopCount = options._loopCount ?? 0;
+  let bookingCount = options._bookingCount ?? 0;
 
   log(`Initializing with current date ${currentBookedDate}`);
 
@@ -25,10 +31,26 @@ export async function botCommand(options) {
     log(`Minimum date: ${minDate}`);
   }
 
+  if (maxLoops) {
+    log(`Max loops: ${maxLoops} (currently at ${loopCount})`);
+  }
+
+  if (maxBookings) {
+    log(`Max real bookings: ${maxBookings} (currently at ${bookingCount})`);
+  }
+
   try {
     const sessionHeaders = await bot.initialize();
 
     while (true) {
+      if (maxLoops && loopCount >= maxLoops) {
+        log(`Reached max loops (${maxLoops}). Exiting.`);
+        process.exit(0);
+      }
+
+      loopCount++;
+      log(`Loop ${loopCount}${maxLoops ? `/${maxLoops}` : ''}`);
+
       const availableDate = await bot.checkAvailableDate(
         sessionHeaders,
         currentBookedDate,
@@ -42,13 +64,26 @@ export async function botCommand(options) {
           // Update current date to the new available date
           currentBookedDate = availableDate;
 
+          // Only real bookings count toward maxBookings.
+          if (!options.dryRun) {
+            bookingCount++;
+            log(`Real bookings so far: ${bookingCount}${maxBookings ? `/${maxBookings}` : ''}`);
+          }
+
           options = {
             ...options,
-            current: currentBookedDate
+            current: currentBookedDate,
+            _loopCount: loopCount,
+            _bookingCount: bookingCount
           };
 
           if (targetDate && availableDate <= targetDate) {
             log(`Target date reached! Successfully booked appointment on ${availableDate}`);
+            process.exit(0);
+          }
+
+          if (maxBookings && bookingCount >= maxBookings) {
+            log(`Reached max real bookings (${maxBookings}). Exiting.`);
             process.exit(0);
           }
         }
@@ -65,6 +100,10 @@ export async function botCommand(options) {
     } else {
       log(`Session/authentication error: ${err.message}. Retrying immediately...`);
     }
-    return botCommand(options);
+    return botCommand({
+      ...options,
+      _loopCount: loopCount,
+      _bookingCount: bookingCount
+    });
   }
 }
