@@ -7,4 +7,4 @@ services:
     env_file:
       - .env
     # Override the CLI args here (current/target/min dates, flags, ...).
-    command: ["-c", "2026-12-09"]
+    command: ["-c", "2026-12-09", "--max-loops", "3", "--dry-run"]
