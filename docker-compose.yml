@@ -3,7 +3,7 @@ services:
     build: .
     image: us-visa-bot:latest
     container_name: us-visa-bot
-    restart: unless-stopped
+    restart: no
     env_file:
       - .env
     # All run parameters (CURRENT_DATE, TARGET_DATE, MIN_DATE, DRY_RUN,

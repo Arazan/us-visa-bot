@@ -42,11 +42,6 @@ export async function botCommand(state = {}) {
     const sessionHeaders = await bot.initialize();
 
     while (true) {
-      if (maxLoops && loopCount >= maxLoops) {
-        log(`Reached max loops (${maxLoops}). Exiting.`);
-        process.exit(0);
-      }
-
       loopCount++;
       log(`Loop ${loopCount}${maxLoops ? `/${maxLoops}` : ''}`);
 
@@ -79,6 +74,13 @@ export async function botCommand(state = {}) {
             process.exit(0);
           }
         }
+      }
+
+      // Exit before sleeping if we've hit the loop cap — no point waiting
+      // around just to immediately exit on the next iteration.
+      if (maxLoops && loopCount >= maxLoops) {
+        log(`Reached max loops (${maxLoops}). Exiting.`);
+        process.exit(0);
       }
 
       const delay = randomDelay(config.refreshDelayMin, config.refreshDelayMax);
