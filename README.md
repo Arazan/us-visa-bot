@@ -9,7 +9,7 @@ An automated bot that monitors and reschedules US visa interview appointments to
 - 🎯 Configurable target and minimum date constraints
 - 🚨 Exits successfully when target date is reached
 - 📊 Detailed logging with timestamps
-- 💬 Optional Discord webhook notifications (mirrors all log output)
+- 💬 Optional Discord webhook notifications on successful bookings and errors
 - 🔐 Secure authentication with environment variables
 
 ## How It Works
@@ -65,7 +65,7 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
 | `FACILITY_ID` | Your consulate facility ID | Found in network calls when selecting dates, or inspect the date selector dropdown <br>Example: Paris = `44` |
 | `REFRESH_DELAY_MIN` | Minimum seconds between checks | Optional, defaults to `60`. A random delay is picked each iteration between MIN and MAX. |
 | `REFRESH_DELAY_MAX` | Maximum seconds between checks | Optional, defaults to `120`. Must be `>= REFRESH_DELAY_MIN`. |
-| `DISCORD_WEBHOOK_URL` | Discord webhook URL for log notifications | Optional. When set, every log message is also posted to the configured Discord channel. Leave unset to disable. |
+| `DISCORD_WEBHOOK_URL` | Discord webhook URL for booking and error notifications | Optional. When set, the bot posts a Discord message on successful bookings and on errors (socket hangups, session/auth failures). Leave unset to disable. |
 
 ### Discord Notifications (Optional)
 
@@ -79,7 +79,7 @@ To receive log messages in a Discord channel:
    DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
    ```
 
-All `log()` output (the same lines you see in the console) will be mirrored to the channel. Messages are sent asynchronously and serialized, so they won't slow down the bot and respect Discord's rate limits (HTTP 429 is handled automatically). If the variable is unset, Discord posting is silently disabled.
+Only **actual bookings** and **errors** are posted to Discord (e.g. `✅ Booked appointment at 2026-07-15 09:00`, or `⚠️ Session/authentication error: ...`). Routine polling logs stay on the console only, so the channel doesn't get spammed. Dry-run "would book" events are not sent. Messages are delivered asynchronously and respect Discord's rate limits (HTTP 429 is handled automatically). If the variable is unset, Discord posting is silently disabled.
 
 > ⚠️ Treat the webhook URL like a secret — anyone with it can post to your channel. Keep your `.env` out of version control.
 

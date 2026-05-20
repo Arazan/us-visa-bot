@@ -13,6 +13,13 @@ export function randomDelay(minSeconds, maxSeconds) {
 export function log(message) {
   const line = `[${new Date().toISOString()}] ${message}`;
   console.log(line);
+}
+
+// Like log(), but also posts to Discord. Use sparingly — reserved for
+// noteworthy events such as actual bookings.
+export function notify(message) {
+  const line = `[${new Date().toISOString()}] ${message}`;
+  console.log(line);
   sendToDiscord(line);
 }
 

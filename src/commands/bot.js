@@ -1,6 +1,6 @@
 import { Bot } from '../lib/bot.js';
 import { getConfig } from '../lib/config.js';
-import { log, sleep, randomDelay, isSocketHangupError } from '../lib/utils.js';
+import { log, notify, sleep, randomDelay, isSocketHangupError } from '../lib/utils.js';
 
 const COOLDOWN = 3600; // 1 hour in seconds
 
@@ -95,10 +95,10 @@ export async function botCommand(options) {
     }
   } catch (err) {
     if (isSocketHangupError(err)) {
-      log(`Socket hangup error: ${err.message}. Trying again after ${COOLDOWN} seconds...`);
+      notify(`⚠️ Socket hangup error: ${err.message}. Trying again after ${COOLDOWN} seconds...`);
       await sleep(COOLDOWN);
     } else {
-      log(`Session/authentication error: ${err.message}. Retrying immediately...`);
+      notify(`⚠️ Session/authentication error: ${err.message}. Retrying immediately...`);
     }
     return botCommand({
       ...options,

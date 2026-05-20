@@ -1,5 +1,5 @@
 import { VisaHttpClient } from './client.js';
-import { log } from './utils.js';
+import { log, notify } from './utils.js';
 
 export class Bot {
   constructor(config, options = {}) {
@@ -79,7 +79,7 @@ export class Bot {
       time
     );
 
-    log(`booked time at ${date} ${time}`);
+    notify(`✅ Booked appointment at ${date} ${time}`);
     return true;
   }
 
