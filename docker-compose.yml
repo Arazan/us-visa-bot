@@ -1,11 +1,31 @@
 services:
+  gluetun:
+      image: qmcgaw/gluetun
+      container_name: vpn-gluetun
+      cap_add:
+        - NET_ADMIN
+      devices:
+        - /dev/net/tun:/dev/net/tun
+      volumes:
+        - ./gluetun-data:/gluetun
+      environment:
+        - VPN_SERVICE_PROVIDER=protonvpn
+        - VPN_TYPE=openvpn
+        # ⚠️ RECUERDA: Estos NO son tus datos de inicio de sesión normales de Proton.
+        # Son las credenciales OpenVPN (strings largos) que descargas de tu panel web de ProtonVPN.
+        - OPENVPN_USER=tu_usuario_OpenVPN_de_proton_aqui
+        - OPENVPN_PASSWORD=tu_password_OpenVPN_de_proton_aqui
+        # Obliga a usar únicamente los servidores del plan gratuito
+        - FREE_ONLY=on
+      restart: no
   bot:
     build: .
     image: us-visa-bot:latest
     container_name: us-visa-bot
     restart: no
+    depends_on:
+      - gluetun
     env_file:
       - .env
-    # All run parameters (CURRENT_DATE, TARGET_DATE, MIN_DATE, DRY_RUN,
-    # MAX_LOOPS, MAX_BOOKINGS, ...) are now configured via .env.
+
 
