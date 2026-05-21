@@ -12,23 +12,21 @@ services:
         - .env
       environment:
         - VPN_SERVICE_PROVIDER=protonvpn
-        - VPN_TYPE=openvpn
-        # ⚠️ RECUERDA: Estos NO son tus datos de inicio de sesión normales de Proton.
-        # Son las credenciales OpenVPN (strings largos) que descargas de tu panel web de ProtonVPN.
+        - VPN_TYPE=openvpn        
         - OPENVPN_USER=${OPENVPN_USER}
         - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
         # Obliga a usar únicamente los servidores del plan gratuito
         - FREE_ONLY=on
       restart: no
-  bot:
-    build: .
-    image: us-visa-bot:latest
-    container_name: us-visa-bot
-    restart: no
-    network_mode: "service:gluetun"
-    depends_on:
-      - gluetun
-    env_file:
-      - .env
+  # bot:
+  #   build: .
+  #   image: us-visa-bot:latest
+  #   container_name: us-visa-bot
+  #   restart: no
+  #   network_mode: "service:gluetun"
+  #   depends_on:
+  #     - gluetun
+  #   env_file:
+  #     - .env
 
 
