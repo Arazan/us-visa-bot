@@ -16,6 +16,11 @@ export async function botCommand(state = {}) {
 
   const { targetDate, minDate, maxLoops, maxBookings } = config;
 
+  if (loopCount === 0) {
+    log(`Waiting 30 seconds before starting...`);
+    await sleep(30);
+  }
+
   log(`Initializing with current date ${currentBookedDate}`);
 
   if (config.dryRun) {
