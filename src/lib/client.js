@@ -73,7 +73,22 @@ export class VisaHttpClient {
       'appointments[asc_appointment][time]': ''
     };
 
-    return this._submitFormWithRedirect(url, bookingHeaders, bookingData);
+    const res = await this._submitFormWithRedirect(url, bookingHeaders, bookingData);
+    const responseBody = await res.text().catch(() => '');
+
+    return {
+      request: {
+        url,
+        method: 'POST',
+        body: bookingData
+      },
+      response: {
+        status: res.status,
+        statusText: res.statusText,
+        url: res.url,
+        body: responseBody
+      }
+    };
   }
 
   // Private request methods

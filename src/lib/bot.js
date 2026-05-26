@@ -71,7 +71,7 @@ export class Bot {
       return true;
     }
 
-    await this.client.book(
+    const result = await this.client.book(
       sessionHeaders,
       this.config.scheduleId,
       this.config.facilityId,
@@ -79,7 +79,20 @@ export class Bot {
       time
     );
 
-    notify(`✅ Booked appointment at ${date} ${time}`);
+    // Truncate response body for logging — booking pages return full HTML.
+    const RESPONSE_BODY_MAX = 1500;
+    const truncatedBody = result.response.body.length > RESPONSE_BODY_MAX
+      ? result.response.body.slice(0, RESPONSE_BODY_MAX) + `... [truncated, total ${result.response.body.length} chars]`
+      : result.response.body;
+
+    const details =
+      `Booking request: ${result.request.method} ${result.request.url}\n` +
+      `Body: ${JSON.stringify(result.request.body)}\n` +
+      `Response: ${result.response.status} ${result.response.statusText} (final URL: ${result.response.url})\n` +
+      `Response body:\n${truncatedBody}`;
+
+    notify(`✅ Booked appointment at ${date} ${time} — HTTP ${result.response.status}`);
+    notify(details);
     return true;
   }
 
