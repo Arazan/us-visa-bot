@@ -16,11 +16,16 @@ export function log(message) {
 }
 
 // Like log(), but also posts to Discord. Use sparingly — reserved for
-// noteworthy events such as actual bookings.
-export function notify(message) {
+// noteworthy events such as actual bookings. Pass `discordMessage` to send
+// a different (e.g. truncated) version to Discord while keeping the full
+// message in the local log.
+export function notify(message, discordMessage = message) {
   const line = `[${new Date().toISOString()}] ${message}`;
   console.log(line);
-  sendToDiscord(line);
+  const discordLine = discordMessage === message
+    ? line
+    : `[${new Date().toISOString()}] ${discordMessage}`;
+  sendToDiscord(discordLine);
 }
 
 // Discord webhook logging (fire-and-forget, serialized to respect rate limits).
