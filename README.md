@@ -95,7 +95,7 @@ To receive log messages in a Discord channel:
    DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
    ```
 
-Only **actual bookings** and **errors** are posted to Discord (e.g. `✅ Booked appointment at 2026-07-15 09:00`, or `⚠️ Session/authentication error: ...`). Routine polling logs stay on the console only, so the channel doesn't get spammed. Dry-run "would book" events are not sent. Messages are delivered asynchronously and respect Discord's rate limits (HTTP 429 is handled automatically). If the variable is unset, Discord posting is silently disabled.
+Only **actual bookings** and **socket hangup errors** are posted to Discord (e.g. `✅ Booked appointment at 2026-07-15 09:00`). Routine polling logs and session/authentication errors stay on the console only, so the channel doesn't get spammed. Dry-run "would book" events are not sent. Messages are delivered asynchronously and respect Discord's rate limits (HTTP 429 is handled automatically). If the variable is unset, Discord posting is silently disabled.
 
 > ⚠️ Treat the webhook URL like a secret — anyone with it can post to your channel. Keep your `.env` out of version control.
 

@@ -97,7 +97,8 @@ export async function botCommand(state = {}) {
       notify(`⚠️ Socket hangup error: ${err.message}. Trying again after ${COOLDOWN} seconds...`);
       await sleep(COOLDOWN);
     } else {
-      notify(`⚠️ Session/authentication error: ${err.message}. Retrying immediately...`);
+      // Console-only: session/auth errors are routine and would spam Discord.
+      log(`⚠️ Session/authentication error: ${err.message}. Retrying immediately...`);
     }
     return botCommand({ currentBookedDate, loopCount, bookingCount });
   }
